@@ -6,6 +6,7 @@
 
 #include "initpop.h"
 #include "parameter.h"
+#include "problem.h"
 
 OptimizationParameters load_default_parameters() {
     OptimizationParameters params{};
@@ -69,6 +70,13 @@ int main() {
 
         const auto population = latin_hypercube_population(params);
         print_population_sample(population);
+
+        if (!population.empty()) {
+            const auto objectives = evaluate_zdt4(population.front());
+            std::cout << "\nZDT4 objectives for first individual: "
+                      << std::fixed << std::setprecision(6) << objectives[0] << ", "
+                      << objectives[1] << '\n';
+        }
     } catch (const std::exception &ex) {
         std::cerr << "Failed to initialize NSGA-II parameters: " << ex.what() << '\n';
         return EXIT_FAILURE;
