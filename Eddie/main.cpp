@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
                 std::cout << '\n';
             }
 
-            const std::string output_path = (argc > 2 && argv[2] != nullptr) ? argv[2] : "Eddie/initial_population.txt";
+            const std::string output_path = (argc > 2 && argv[2] != nullptr) ? argv[2] : "initial_population.txt";
             write_population_report(output_path, params, population, objective_matrix, sort_result);
             std::cout << "\nWrote initial population report to " << output_path << '\n';
         } else {

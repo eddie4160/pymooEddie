@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -82,6 +83,93 @@ void ensure_token_count(const std::vector<std::string> &tokens, std::size_t expe
 void synchronize_distribution_aliases(OptimizationParameters &params) {
     params.distribution_index_crossover = params.crossover_distribution_index;
     params.distribution_index_mutation = params.mutation_distribution_index;
+}
+
+void ensure_zdt4_defaults(OptimizationParameters &params,
+                          std::size_t &declared_variables,
+                          std::size_t &declared_objectives) {
+    const std::string canonical = canonicalize_problem_name(params.problem_name);
+    if (canonical != "ZDT4") {
+        return;
+    }
+
+    constexpr std::size_t expected_variables = 10;
+    constexpr std::size_t expected_objectives = 2;
+
+    if (declared_variables != 0 && declared_variables != expected_variables) {
+        std::cerr << "Warning: ZDT4 expects " << expected_variables
+                  << " decision variables. Overriding declared count of " << declared_variables << " with "
+                  << expected_variables << "\n";
+    }
+    declared_variables = expected_variables;
+
+    if (params.variable_names.size() != expected_variables) {
+        if (!params.variable_names.empty()) {
+            std::cerr << "Warning: Overriding ZDT4 variable names to x1..x" << expected_variables << "\n";
+        }
+        params.variable_names.resize(expected_variables);
+        for (std::size_t i = 0; i < expected_variables; ++i) {
+            params.variable_names[i] = "x" + std::to_string(i + 1);
+        }
+    }
+
+    std::vector<double> lower(expected_variables, -5.0);
+    lower[0] = 0.0;
+    std::vector<double> upper(expected_variables, 5.0);
+    upper[0] = 1.0;
+
+    if (params.variable_lower_bounds.size() != expected_variables) {
+        if (!params.variable_lower_bounds.empty()) {
+            std::cerr << "Warning: Overriding ZDT4 lower bounds to default range." << '\n';
+        }
+        params.variable_lower_bounds = lower;
+    } else {
+        bool mismatch = false;
+        for (std::size_t i = 0; i < expected_variables; ++i) {
+            const double expected = lower[i];
+            if (std::abs(params.variable_lower_bounds[i] - expected) > 1e-9) {
+                mismatch = true;
+                break;
+            }
+        }
+        if (mismatch) {
+            std::cerr << "Warning: Adjusting ZDT4 lower bounds to [0,1] for x1 and [-5,5] for others." << '\n';
+            params.variable_lower_bounds = lower;
+        }
+    }
+
+    if (params.variable_upper_bounds.size() != expected_variables) {
+        if (!params.variable_upper_bounds.empty()) {
+            std::cerr << "Warning: Overriding ZDT4 upper bounds to default range." << '\n';
+        }
+        params.variable_upper_bounds = upper;
+    } else {
+        bool mismatch = false;
+        for (std::size_t i = 0; i < expected_variables; ++i) {
+            const double expected = upper[i];
+            if (std::abs(params.variable_upper_bounds[i] - expected) > 1e-9) {
+                mismatch = true;
+                break;
+            }
+        }
+        if (mismatch) {
+            std::cerr << "Warning: Adjusting ZDT4 upper bounds to [0,1] for x1 and [-5,5] for others." << '\n';
+            params.variable_upper_bounds = upper;
+        }
+    }
+
+    if (declared_objectives != 0 && declared_objectives != expected_objectives) {
+        std::cerr << "Warning: ZDT4 uses " << expected_objectives
+                  << " objectives. Overriding declared count of " << declared_objectives << "\n";
+    }
+    declared_objectives = expected_objectives;
+
+    if (params.objective_names.size() != expected_objectives) {
+        if (!params.objective_names.empty()) {
+            std::cerr << "Warning: Overriding ZDT4 objective names to f1 and f2." << '\n';
+        }
+        params.objective_names = {"f1", "f2"};
+    }
 }
 
 } // namespace
@@ -218,6 +306,7 @@ OptimizationParameters load_parameters_from_file(const std::string &path) {
     }
 
     synchronize_distribution_aliases(params);
+    ensure_zdt4_defaults(params, declared_variables, declared_objectives);
 
     if (!params.variable_names.empty() && declared_variables != params.variable_names.size()) {
         throw std::runtime_error("Variable name count does not match the declared number of variables");
@@ -274,7 +363,7 @@ OptimizationParameters load_parameters_from_cli(int argc, char **argv) {
     if (argc > 1 && argv[1] != nullptr) {
         parameter_path = argv[1];
     } else {
-        parameter_path = "Eddie/input.txt";
+        parameter_path = "input.txt";
         std::cerr << "Warning: No parameter file specified. Using default path '" << parameter_path << "'.\n";
     }
 

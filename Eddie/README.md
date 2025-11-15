@@ -25,22 +25,24 @@ A dedicated Makefile is provided. From the repository root run:
 make -C Eddie
 ```
 
-This builds an executable named `nsga_demo` in the `Eddie/` directory.
+This builds an executable named `nsga_demo` inside the `Eddie/` directory.
 
 ## Running
 
-Execute the program by supplying a parameter file (and optionally an output path for the ASCII export):
+Change into the `Eddie/` directory and execute the program by supplying a parameter file (and optionally an output path for the
+ASCII export):
 
 ```bash
-./Eddie/nsga_demo Eddie/input.txt Eddie/initial_population.txt
+cd Eddie
+./nsga_demo input.txt initial_population.txt
 ```
 
-If you omit the output file, the default `Eddie/initial_population.txt` is used. When no parameter file is supplied, the program
-falls back to `Eddie/input.txt` and prints a warning.
+If you omit the output file, the default `./initial_population.txt` is used. When no parameter file is supplied, the program
+falls back to `./input.txt` and prints a warning.
 
 ## Parameter file format
 
-The parser accepts a simple key-value format with optional `#` comments. The example `Eddie/input.txt` shows every supported
+The parser accepts a simple key-value format with optional `#` comments. The example `input.txt` shows every supported
 field. Required entries include the problem name, variable metadata, objective metadata, and evolutionary operator settings. Key
 highlights:
 
@@ -59,24 +61,24 @@ from the parent population size or if a referenced problem is not implemented ye
 After running `nsga_demo`, visualize the exported population via:
 
 ```bash
-python Eddie/plot.py --data Eddie/initial_population.txt --output Eddie/pareto_front.png
+python plot.py --data initial_population.txt --output pareto_front.png
 ```
 
 This renders each Pareto front in a different color, making it easy to inspect the initial sampling quality.
 
 ## Adding files to the repository with Git
 
-When you create new C++ source files (for example `Eddie/crossover.cpp`), stage them so they become part of the repository
+When you create new C++ source files (for example `crossover.cpp`), stage them so they become part of the repository
 history:
 
 ```bash
-git add Eddie/crossover.cpp
+git add crossover.cpp
 ```
 
 To stage the existing scaffold after making edits:
 
 ```bash
-git add Eddie/main.cpp Eddie/parameter.cpp Eddie/parameter.h
+git add main.cpp parameter.cpp parameter.h
 ```
 
 Check your changes:

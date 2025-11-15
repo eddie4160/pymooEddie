@@ -6,8 +6,9 @@ that ASCII export and visualizes the fronts in objective space.
 
 Example usage::
 
-    ./Eddie/nsga_demo  # generates Eddie/initial_population.txt by default
-    python Eddie/plot.py --data Eddie/initial_population.txt --output pareto.png
+    cd Eddie
+    ./nsga_demo input.txt initial_population.txt
+    python plot.py --data initial_population.txt --output pareto.png
 
 Use ``--show`` to display the plot interactively instead of writing to disk.
 """
@@ -83,6 +84,14 @@ def plot_fronts(
     fig, ax = plt.subplots(figsize=(8, 6))
 
     first_front = unique_fronts.min()
+    marker_map = {
+        1: "s",
+        2: "^",
+        3: "D",
+        4: "v",
+        5: "P",
+    }
+
     for plot_idx, front_id in enumerate(unique_fronts):
         mask = fronts == front_id
         if not np.any(mask):
@@ -91,6 +100,7 @@ def plot_fronts(
         color = cmap(plot_idx / max(1, num_fronts - 1))
         size = 80 if front_id == first_front else 50
         edgecolor = "black" if front_id == first_front else "none"
+        marker = marker_map.get(int(front_id), "o")
         ax.scatter(
             points[:, 0],
             points[:, 1],
@@ -98,16 +108,17 @@ def plot_fronts(
             s=size,
             color=color,
             edgecolors=edgecolor,
+            marker=marker,
             alpha=0.8,
         )
 
     ax.set_xlabel("Objective 1 (f1)")
     ax.set_ylabel("Objective 2 (f2)")
     ax.set_title("Initial Population Pareto Fronts (ZDT4)")
-    ax.legend(title="Pareto Fronts")
+    ax.legend(title="Pareto Fronts", loc="upper left", bbox_to_anchor=(1.05, 1.0))
     ax.grid(True, linestyle="--", alpha=0.3)
 
-    fig.tight_layout()
+    fig.tight_layout(rect=[0, 0, 0.78, 1])
 
     if output_path:
         fig.savefig(output_path, dpi=300)
@@ -124,7 +135,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--data",
         type=Path,
-        default=Path("Eddie/initial_population.txt"),
+        default=Path("initial_population.txt"),
         help="ASCII file produced by nsga_demo containing objectives and fronts",
     )
     parser.add_argument(
