@@ -1,8 +1,11 @@
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <exception>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include "initpop.h"
 #include "parameter.h"
@@ -64,7 +67,76 @@ void print_population_sample(const Population &population, std::size_t count = 5
     }
 }
 
-int main() {
+std::string sanitize_identifier(const std::string &name, const std::string &fallback_prefix, std::size_t index) {
+    std::string sanitized;
+    sanitized.reserve(name.size());
+    for (unsigned char ch : name) {
+        if (std::isalnum(ch) || ch == '_') {
+            sanitized.push_back(static_cast<char>(ch));
+        } else if (ch == ' ') {
+            sanitized.push_back('_');
+        }
+    }
+
+    if (sanitized.empty()) {
+        sanitized = fallback_prefix + std::to_string(index + 1);
+    }
+
+    return sanitized;
+}
+
+void write_population_report(const std::string &path,
+                             const OptimizationParameters &params,
+                             const Population &population,
+                             const std::vector<std::vector<double>> &objectives,
+                             const NonDominatedSortResult &sort_result) {
+    if (population.size() != objectives.size() || population.size() != sort_result.ranks.size()) {
+        throw std::runtime_error("Population, objective, and rank counts must match to write report");
+    }
+
+    std::ofstream out(path);
+    if (!out) {
+        throw std::runtime_error("Failed to open population report file: " + path);
+    }
+
+    out << "# NSGA-II initial population export" << '\n';
+    out << "# index front";
+
+    for (std::size_t i = 0; !objectives.empty() && i < objectives.front().size(); ++i) {
+        const std::string label = i < params.objective_names.size()
+                                       ? sanitize_identifier(params.objective_names[i], "objective", i)
+                                       : "objective" + std::to_string(i + 1);
+        out << ' ' << label;
+    }
+
+    for (std::size_t i = 0; i < params.variable_names.size(); ++i) {
+        const std::string label = sanitize_identifier(params.variable_names[i], "x", i);
+        out << ' ' << label;
+    }
+
+    out << '\n';
+
+    for (std::size_t i = 0; i < population.size(); ++i) {
+        const std::size_t front = sort_result.ranks[i] + 1; // convert to 1-based indexing
+        out << i << ' ' << front;
+
+        if (i < objectives.size()) {
+            for (const double value : objectives[i]) {
+                out << ' ' << std::setprecision(12) << value;
+            }
+        }
+
+        if (i < population.size()) {
+            for (const double variable : population[i]) {
+                out << ' ' << std::setprecision(12) << variable;
+            }
+        }
+
+        out << '\n';
+    }
+}
+
+int main(int argc, char **argv) {
     try {
         const auto params = load_default_parameters();
         print_parameters(params);
@@ -93,6 +165,10 @@ int main() {
                 }
                 std::cout << '\n';
             }
+
+            const std::string output_path = argc > 1 ? argv[1] : "Eddie/initial_population.txt";
+            write_population_report(output_path, params, population, objective_matrix, sort_result);
+            std::cout << "\nWrote initial population report to " << output_path << '\n';
         }
     } catch (const std::exception &ex) {
         std::cerr << "Failed to initialize NSGA-II parameters: " << ex.what() << '\n';
