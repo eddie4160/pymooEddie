@@ -6,34 +6,24 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "initpop.h"
 #include "parameter.h"
 #include "problem.h"
 #include "sort.h"
 
-OptimizationParameters load_default_parameters() {
-    OptimizationParameters params{};
-
-    params.variable_names = {"x1", "x2", "x3", "x4", "x5"};
-    params.objective_names = {"Objective 1", "Objective 2"};
-
-    params.variable_lower_bounds = {0.0, 0.0, 0.0, 0.0, 0.0};
-    params.variable_upper_bounds = {1.0, 1.0, 1.0, 1.0, 1.0};
-
-    return params;
-}
-
 void print_parameters(const OptimizationParameters &params) {
     std::cout << "NSGA-II configuration" << '\n';
     std::cout << "----------------------" << '\n';
+    std::cout << "Problem: " << params.problem_name << '\n';
     std::cout << "Population size: " << params.population_size << '\n';
     std::cout << "Offspring population size: " << params.offspring_population_size << '\n';
     std::cout << "Max generations: " << params.max_generations << '\n';
     std::cout << "Crossover probability: " << params.crossover_probability << '\n';
     std::cout << "Mutation probability: " << params.mutation_probability << '\n';
-    std::cout << "SBX distribution index: " << params.distribution_index_crossover << '\n';
-    std::cout << "Polynomial mutation index: " << params.distribution_index_mutation << '\n';
+    std::cout << "SBX distribution index: " << params.crossover_distribution_index << '\n';
+    std::cout << "Polynomial mutation index: " << params.mutation_distribution_index << '\n';
     std::cout << "Random seed: " << params.random_seed << '\n';
 
     std::cout << "Design variables:" << '\n';
@@ -138,20 +128,35 @@ void write_population_report(const std::string &path,
 
 int main(int argc, char **argv) {
     try {
-        const auto params = load_default_parameters();
+        const OptimizationParameters params = load_parameters_from_cli(argc, argv);
         print_parameters(params);
 
-        const auto population = latin_hypercube_population(params);
+        const Population population = latin_hypercube_population(params);
         print_population_sample(population);
 
-        if (!population.empty()) {
-            const auto objectives = evaluate_zdt4(population.front());
-            std::cout << "\nZDT4 objectives for first individual: "
-                      << std::fixed << std::setprecision(6) << objectives[0] << ", "
-                      << objectives[1] << '\n';
+        std::vector<std::vector<double>> objective_matrix;
+        bool evaluation_available = false;
 
-            const auto objective_matrix = evaluate_zdt4_population(population);
-            const auto sort_result = fast_non_dominated_sort(objective_matrix);
+        try {
+            objective_matrix = evaluate_problem_population(params.problem_name, population);
+            evaluation_available = true;
+        } catch (const std::exception &ex) {
+            std::cerr << "Warning: Failed to evaluate problem '" << params.problem_name
+                      << "': " << ex.what() << '\n';
+        }
+
+        if (evaluation_available && !objective_matrix.empty()) {
+            const auto &first_objectives = objective_matrix.front();
+            if (first_objectives.size() >= 2) {
+                std::cout << "\nObjectives for first individual: " << std::fixed << std::setprecision(6)
+                          << first_objectives[0];
+                for (std::size_t i = 1; i < first_objectives.size(); ++i) {
+                    std::cout << ", " << first_objectives[i];
+                }
+                std::cout << '\n';
+            }
+
+            const NonDominatedSortResult sort_result = fast_non_dominated_sort(objective_matrix);
 
             std::cout << "\nNon-dominated sorting summary:" << '\n';
             std::cout << "  Total fronts: " << sort_result.fronts.size() << '\n';
@@ -166,9 +171,11 @@ int main(int argc, char **argv) {
                 std::cout << '\n';
             }
 
-            const std::string output_path = argc > 1 ? argv[1] : "Eddie/initial_population.txt";
+            const std::string output_path = (argc > 2 && argv[2] != nullptr) ? argv[2] : "Eddie/initial_population.txt";
             write_population_report(output_path, params, population, objective_matrix, sort_result);
             std::cout << "\nWrote initial population report to " << output_path << '\n';
+        } else {
+            std::cout << "\nSkipping non-dominated sorting and report generation due to missing objectives." << '\n';
         }
     } catch (const std::exception &ex) {
         std::cerr << "Failed to initialize NSGA-II parameters: " << ex.what() << '\n';
@@ -177,3 +184,4 @@ int main(int argc, char **argv) {
 
     return EXIT_SUCCESS;
 }
+

@@ -1,0 +1,16 @@
+# Sample NSGA-II parameter file
+problem_name ZDT4
+num_variables 5
+variable_names x1 x2 x3 x4 x5
+variable_lower_bounds 0 0 0 0 0
+variable_upper_bounds 1 1 1 1 1
+num_objectives 2
+objective_names f1 f2
+parent_population_size 100
+offspring_population_size 100
+max_generation 250
+crossover_probability 0.9
+crossover_distribution_index 15.0
+mutation_probability 0.1
+mutation_distribution_index 20.0
+random_seed 42

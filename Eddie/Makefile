@@ -3,7 +3,7 @@ CXXFLAGS ?= -std=c++17 -Wall -Wextra -Wpedantic -O2
 LDFLAGS ?=
 
 TARGET := nsga_demo
-SRCS := main.cpp initpop.cpp problem.cpp sort.cpp
+SRCS := main.cpp initpop.cpp parameter.cpp problem.cpp sort.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 .PHONY: all clean run
