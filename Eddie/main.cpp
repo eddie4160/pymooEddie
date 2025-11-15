@@ -1,7 +1,10 @@
+#include <algorithm>
 #include <cstdlib>
 #include <exception>
+#include <iomanip>
 #include <iostream>
 
+#include "initpop.h"
 #include "parameter.h"
 
 namespace {
@@ -44,12 +47,32 @@ void print_parameters(const eddie::OptimizationParameters &params) {
     }
 }
 
+void print_population_sample(const eddie::Population &population, std::size_t count = 5) {
+    std::cout << "\nLatin Hypercube Initial Population (first "
+              << std::min(count, population.size()) << " individuals)" << '\n';
+    std::cout << "-----------------------------------------------------" << '\n';
+    const std::size_t display_count = std::min(count, population.size());
+    for (std::size_t i = 0; i < display_count; ++i) {
+        std::cout << "Individual " << (i + 1) << ": ";
+        for (std::size_t j = 0; j < population[i].size(); ++j) {
+            std::cout << std::fixed << std::setprecision(4) << population[i][j];
+            if (j + 1 < population[i].size()) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << '\n';
+    }
+}
+
 } // namespace
 
 int main() {
     try {
         const auto params = load_default_parameters();
         print_parameters(params);
+
+        const auto population = eddie::latin_hypercube_population(params);
+        print_population_sample(population);
     } catch (const std::exception &ex) {
         std::cerr << "Failed to initialize NSGA-II parameters: " << ex.what() << '\n';
         return EXIT_FAILURE;
