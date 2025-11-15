@@ -6,15 +6,11 @@
 
 #include "parameter.h"
 
-namespace eddie {
-
 using Individual = std::vector<double>;
 using Population = std::vector<Individual>;
 
 Population latin_hypercube_population(const OptimizationParameters &params, std::mt19937 &rng);
 
 Population latin_hypercube_population(const OptimizationParameters &params);
-
-} // namespace eddie
 
 #endif // EDDIE_INITPOP_H

@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <numeric>
 
-namespace eddie {
-
 Population latin_hypercube_population(const OptimizationParameters &params, std::mt19937 &rng) {
     const std::size_t population_size = params.population_size;
     const std::size_t dimension = params.variable_names.empty()
@@ -39,5 +37,3 @@ Population latin_hypercube_population(const OptimizationParameters &params) {
     std::mt19937 rng(params.random_seed);
     return latin_hypercube_population(params, rng);
 }
-
-} // namespace eddie

@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-namespace eddie {
-
 struct OptimizationParameters {
     std::size_t population_size = 100;
     std::size_t offspring_population_size = 100;
@@ -24,7 +22,5 @@ struct OptimizationParameters {
 };
 
 OptimizationParameters load_parameters_from_file(const std::string &path);
-
-} // namespace eddie
 
 #endif // EDDIE_PARAMETER_H

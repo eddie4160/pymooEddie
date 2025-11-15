@@ -7,10 +7,8 @@
 #include "initpop.h"
 #include "parameter.h"
 
-namespace {
-
-eddie::OptimizationParameters load_default_parameters() {
-    eddie::OptimizationParameters params{};
+OptimizationParameters load_default_parameters() {
+    OptimizationParameters params{};
 
     params.variable_names = {"x1", "x2", "x3", "x4", "x5"};
     params.objective_names = {"Objective 1", "Objective 2"};
@@ -21,7 +19,7 @@ eddie::OptimizationParameters load_default_parameters() {
     return params;
 }
 
-void print_parameters(const eddie::OptimizationParameters &params) {
+void print_parameters(const OptimizationParameters &params) {
     std::cout << "NSGA-II configuration" << '\n';
     std::cout << "----------------------" << '\n';
     std::cout << "Population size: " << params.population_size << '\n';
@@ -47,7 +45,7 @@ void print_parameters(const eddie::OptimizationParameters &params) {
     }
 }
 
-void print_population_sample(const eddie::Population &population, std::size_t count = 5) {
+void print_population_sample(const Population &population, std::size_t count = 5) {
     std::cout << "\nLatin Hypercube Initial Population (first "
               << std::min(count, population.size()) << " individuals)" << '\n';
     std::cout << "-----------------------------------------------------" << '\n';
@@ -64,14 +62,12 @@ void print_population_sample(const eddie::Population &population, std::size_t co
     }
 }
 
-} // namespace
-
 int main() {
     try {
         const auto params = load_default_parameters();
         print_parameters(params);
 
-        const auto population = eddie::latin_hypercube_population(params);
+        const auto population = latin_hypercube_population(params);
         print_population_sample(population);
     } catch (const std::exception &ex) {
         std::cerr << "Failed to initialize NSGA-II parameters: " << ex.what() << '\n';
